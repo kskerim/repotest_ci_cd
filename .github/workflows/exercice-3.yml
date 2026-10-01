@@ -3,12 +3,11 @@ name: exercice 3 - construire, tester et déployer
 on:
   workflow_dispatch:
     inputs:
-      environnement:
-        description: environnement de déploiement
+      target:
+        description: environnement à déployer
+        required: true
         type: choice
-        options:
-          - staging
-          - production
+        options: [staging, production]
 
 # les jobs peuvent juste lire le dépôt
 permissions:
@@ -22,13 +21,14 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24.18.0
+          cache: npm
       - run: npm ci
       - run: npm run build
-      - name: publier dist
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
           name: application
           path: dist/
+          if-no-files-found: error
 
   test:
     needs: build
@@ -38,12 +38,15 @@ jobs:
       matrix:
         node: [20, 22]
         os: [ubuntu-latest, windows-latest]
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
       - uses: actions/download-artifact@v7
         with:
           name: application
@@ -53,16 +56,23 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environnement }}
+    environment:
+      name: ${{ inputs.target }}
+      url: ${{ vars.API_URL }}
+
     steps:
       - uses: actions/download-artifact@v7
         with:
           name: application
           path: dist/
-      - run: echo "deploy to ${{ vars.API_URL }}"
-      - name: résumé
+
+      - name: simuler le déploiement
+        run: echo "déploiement vers ${{ vars.API_URL }}"
+
+      - name: produire le résumé
+        shell: bash
         run: |
-          echo "## déploiement" >> $GITHUB_STEP_SUMMARY
-          echo "cible : ${{ inputs.environnement }}" >> $GITHUB_STEP_SUMMARY
-          echo "url : ${{ vars.API_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "commit : ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "## déploiement" >> "$GITHUB_STEP_SUMMARY"
+          echo "- environnement : ${{ inputs.target }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- url : ${{ vars.API_URL }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commit : \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
