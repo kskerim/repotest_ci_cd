@@ -1,0 +1,14 @@
+{
+  "name": "repotest_ci_cd",
+  "version": "1.0.0",
+  "description": "projet de test pour les exercices de ci/cd avec github actions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --minify --platform=node --format=esm --target=node20 --outfile=dist/index.js",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

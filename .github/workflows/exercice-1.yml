@@ -1,0 +1,38 @@
+name: exercice 1 - valider le projet
+
+on:
+  push:
+
+jobs:
+  valider:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: récupérer le code
+        uses: actions/checkout@v7
+
+      - name: installer node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.0
+
+      - name: mettre en cache les dépendances npm
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+
+      - name: installer les dépendances
+        run: npm ci
+
+      - name: lancer les tests
+        run: npm test
+
+      # always() écrit le résumé même si une étape d'avant a échoué
+      - name: écrire le résumé
+        if: always()
+        run: |
+          echo "## résultat de la ci" >> $GITHUB_STEP_SUMMARY
+          echo "- statut du job : ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ref : ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- commit : ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
