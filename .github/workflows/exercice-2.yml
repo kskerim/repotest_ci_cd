@@ -31,8 +31,8 @@ jobs:
       # échoue avec une annotation visible dans github si le build n'a rien produit
       - name: vérifier que le fichier de build existe
         run: |
-          if [ ! -f dist/main.js ]; then
-            echo "::error::le build n'a pas produit dist/main.js"
+          if [ ! -f dist/index.js ]; then
+            echo "::error::le build n'a pas produit dist/index.js"
             exit 1
           fi
 
