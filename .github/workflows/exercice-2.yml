@@ -1,0 +1,56 @@
+name: exercice 2 - produire un artefact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: récupérer le code
+        uses: actions/checkout@v7
+
+      - name: installer node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.0
+
+      - name: mettre en cache les dépendances npm
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+
+      - name: installer les dépendances
+        run: npm ci
+
+      - name: lancer le build
+        run: npm run build
+
+      # échoue avec une annotation visible dans github si le build n'a rien produit
+      - name: vérifier que le fichier de build existe
+        run: |
+          if [ ! -f dist/main.js ]; then
+            echo "::error::le build n'a pas produit dist/main.js"
+            exit 1
+          fi
+
+      - name: sauvegarder dist/ comme artefact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: dist/
+
+      - name: écrire le résumé du build
+        if: always()
+        run: |
+          echo "## résumé du build" >> $GITHUB_STEP_SUMMARY
+          echo "- statut du job : ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- build n° ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- commit : ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- branche : ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- date : $(date -u '+%d/%m/%Y %H:%M') utc" >> $GITHUB_STEP_SUMMARY
+          echo "- lancé par : ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- node.js : $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- taille de dist/ : $(du -sh dist 2>/dev/null | cut -f1)" >> $GITHUB_STEP_SUMMARY
