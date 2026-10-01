@@ -42,7 +42,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: actions/download-artifact@v7
         with:
-          name: build
+          name: application
           path: dist/
       - run: npm test
 
